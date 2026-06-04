@@ -31,10 +31,27 @@ longpoll = VkBotLongPoll(vk_session, GROUP_ID)
 print("✅ Бот запущен на Bothost")
 
 for event in longpoll.listen():
-    if event.type == VkBotEventType.MESSAGE_NEW and event.message.from_id in ADMIN_VK_IDS:
-        text = event.message.text.strip()
-        if text.lower().startswith('/setadmin'):
-            parts = text.split()
-            if len(parts) == 3 and parts[2].isdigit() and 1 <= int(parts[2]) <= 13:
-                vk.messages.send(peer_id=event.message.peer_id, message=f"🔄 Выдаю {parts[1]} {parts[2]} уровень...", random_id=random.randint(1, 10**9))
-                vk.messages.send(peer_id=event.message.peer_id, message=set_admin_in_db(parts[1], int(parts[2])), random_id=random.randint(1, 10**9))
+    if event.type == VkBotEventType.MESSAGE_NEW:
+        text = event.message.text.strip().lower()
+        
+        # Команда /is - показывает ID беседы (для всех)
+        if text == "/is":
+            if event.message.peer_id > 2000000000:
+                chat_id = event.message.peer_id - 2000000000
+                response = f"📊 ID беседы: {chat_id}\npeer_id: {event.message.peer_id}"
+            else:
+                response = f"📊 ID диалога: {event.message.peer_id}"
+            
+            vk.messages.send(
+                peer_id=event.message.peer_id,
+                message=response,
+                random_id=random.randint(1, 10**9)
+            )
+        
+        # Админские команды
+        elif event.message.from_id in ADMIN_VK_IDS:
+            if text.startswith('/setadmin'):
+                parts = event.message.text.strip().split()
+                if len(parts) == 3 and parts[2].isdigit() and 1 <= int(parts[2]) <= 13:
+                    vk.messages.send(peer_id=event.message.peer_id, message=f"🔄 Выдаю {parts[1]} {parts[2]} уровень...", random_id=random.randint(1, 10**9))
+                    vk.messages.send(peer_id=event.message.peer_id, message=set_admin_in_db(parts[1], int(parts[2])), random_id=random.randint(1, 10**9))
